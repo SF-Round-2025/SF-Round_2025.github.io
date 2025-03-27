@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Dynamic Map Update</title>
+</head>
+<body>
+  <h1>Update My Location</h1>
+  <button id="getLocation">Get My Location</button>
+  <div id="status"></div>
+  <img id="mapImage" src="https://my-python-backend.onrender.com/static/current_map.png" alt="Map" />
+
+  <script>
+    document.getElementById('getLocation').addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        document.getElementById('status').innerText = "Geolocation not supported.";
+        return;
+      }
+      document.getElementById('status').innerText = "Fetching location...";
+
+      navigator.geolocation.getCurrentPosition(successCallback, errorCallback);
+    });
+
+    function successCallback(position) {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      document.getElementById('status').innerText = `Location: ${lat}, ${lng}`;
+
+      fetch('https://my-python-backend.onrender.com/update_location', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lat, lng })
+      })
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('status').innerText = data.message || "Location updated!";
+        // Append a query parameter to force the browser to fetch the latest image
+        const img = document.getElementById('mapImage');
+        img.src = `https://my-python-backend.onrender.com/static/current_map.png?ts=${Date.now()}`;
+      })
+      .catch(error => {
+        document.getElementById('status').innerText = "Error updating location.";
+        console.error('Error:', error);
+      });
+    }
+
+    function errorCallback(error) {
+      document.getElementById('status').innerText = "Error: " + error.message;
+    }
+  </script>
+</body>
+</html>
